@@ -3,6 +3,7 @@
 
 
 import json
+#LISTAS ALUNOS, PROFESSORES, MATRICULAS, TURMAS E DISCIPLINAS.
 lista_aluno = []
 lista_professores = []
 lista_matriculas = []
@@ -259,67 +260,98 @@ def salvar_dados_matriculas(lista_matriculas):
 
 
 def incluir_matricula():
-    print('\n\n===INCLUIR MATRÍCULA===\n\n')
+    print('\n\n=== INCLUIR MATRÍCULA ===\n\n')
     lista_matriculas = carregar_dados_matriculas()
-    codigo_turma = int(input('Código da turma: '))
-    codigo_estudante = int(input('Código do estudante: '))
-    turmas = carregar_dados_turmas()
-    alunos = carregar_dados_alunos()
+    lista_turmas = carregar_dados_turmas()
+    lista_aluno = carregar_dados_alunos()
 
-    # Verifica se o código da turma e do estudante existem
-    if not any(turma['codigo'] == codigo_turma for turma in turmas):
-        print('Turma não encontrada!')
+    codigo = input('Código da turma: ')
+    # Verifica se o código da turma existe na lista de turmas
+    if not any(codigo == turma['codigo'] for turma in lista_turmas):
+        print('Código da turma não encontrado. Operação cancelada.')
         return
-    if not any(aluno['codigo'] == codigo_estudante for aluno in alunos):
-        print('Estudante não encontrado!')
+
+    aluno = input('Código do estudante: ')
+    # Verifica se o código do aluno existe na lista de alunos
+    if not any(aluno == alun['codigo'] for alun in lista_aluno):
+        print('Código do estudante não encontrado. Operação cancelada.')
         return
+
 
     matricula = {
-        'codigo_turma': codigo_turma,
-        'codigo_estudante': codigo_estudante
+        'codigo': codigo,
+        'aluno': aluno
     }
+
     lista_matriculas.append(matricula)
     salvar_dados_matriculas(lista_matriculas)
-
+    print('Matrícula incluída com sucesso.')
 
 def listar_matriculas():
-    print('\n\n===LISTAR MATRÍCULAS===\n\n')
+    print('\n\n=== LISTAR MATRÍCULAS ===\n\n')
     lista_matriculas = carregar_dados_matriculas()
     lista_turmas = carregar_dados_turmas()
     lista_alunos = carregar_dados_alunos()
 
     for matricula in lista_matriculas:
-        codigo_turma = matricula['codigo_turma']
-        codigo_estudante = matricula['codigo_estudante']
-        turma = next(
-            (turma for turma in lista_turmas if turma['codigo'] == codigo_turma), None)
-        aluno = next(
-            (aluno for aluno in lista_alunos if aluno['codigo'] == codigo_estudante), None)
+        codigo_turma = matricula.get('codigo')
+        codigo_aluno = matricula.get('aluno')
+
+        # Buscar informações correspondentes à turma e ao aluno
+        turma = None
+        for t in lista_turmas:
+            if t['codigo'] == codigo_turma:
+                turma = t
+                break
+
+        aluno = None
+        for a in lista_alunos:
+            if a['codigo'] == codigo_aluno:
+                aluno = a
+                break
 
         if turma and aluno:
-            print(
-                f"* Código da turma: {turma['codigo']} - Disciplina: {turma['disciplina']} - Professor: {turma['professor']}")
-            print(
-                f"  Código do estudante: {aluno['codigo']} - Nome: {aluno['nome']}")
-            print()
-        else:
-            print('Erro: matrícula inválida!')
-            print()
+            print(f"* O Aluno {aluno['nome']} está matrículado na turma {codigo_turma}")
 
-    if len(lista_matriculas) == 0:
-        print('Não há matrículas cadastradas!')
+
+        if len(lista_matriculas) == 0:
+            print('Não há matrículas cadastradas!')
+
+
+def atualizar_matricula():
+    print('\n\n=== ATUALIZAR MATRICULA ===\n\n')
+    lista_matriculas = carregar_dados_matriculas()
+    codigo_aluno = input('Digite o código do aluno: ')
+    matricula_encontrada = False
+    for matricula in lista_matriculas:
+        if 'aluno' in matricula and matricula['aluno'] == codigo_aluno:
+            matricula_encontrada = True
+            nova_matricula = input('Digite o novo código da turma: ')
+            matricula['codigo'] = nova_matricula
+            salvar_dados_matriculas(lista_matriculas)
+            print(f'A matrícula do aluno com código {codigo_aluno} foi atualizada.\n')
+    if not matricula_encontrada:
+        print('Não há matrícula para o aluno com código informado.\n')
 
 
 def excluir_matricula():
-    print('\n\n===EXCLUIR MATRÍCULA===\n\n')
+    print('\n\n=== EXCLUIR MATRÍCULA ===\n\n')
     lista_matriculas = carregar_dados_matriculas()
-    codigo_turma = int(input('Código da turma: '))
-    codigo_estudante = int(input('Código do estudante: '))
 
-    # Verifica se a matrícula existe
-    if not any(matricula['codigo_turma'] == codigo_turma and matricula['codigo_estudante'] == codigo_estudante for matricula in lista_matriculas):
-        print('Matrícula não encontrada!')
-        return
+    codigo_aluno = input('Código do aluno: ')
+
+    # Verifica se o código do aluno existe na lista de matriculas
+    matricula_encontrada = False
+    for matricula in lista_matriculas:
+        if matricula.get('aluno') == codigo_aluno:
+            lista_matriculas.remove(matricula)
+            matricula_encontrada = True
+
+    if matricula_encontrada:
+        salvar_dados_matriculas(lista_matriculas)
+        print('Matrícula excluída com sucesso.')
+    else:
+        print('Matrícula não encontrada.')
 
 
 def carregar_dados_disciplinas():
@@ -355,7 +387,7 @@ def listar_disciplinas():
     print('\n\n===LISTAR DISCIPLINAS===\n\n')
     lista_disciplina = carregar_dados_disciplinas()
     for dic in lista_disciplina:
-        print("* Código: {} - Nome: {}".format(dic['codigo'], dic['nome']))
+        print("* Código: {} - Disciplina: {}".format(dic['codigo'], dic['nome']))
         print()
     if len(lista_disciplina) == 0:
         print('Não há disciplinas cadastradas!')
@@ -411,16 +443,12 @@ def sub_menu(opcao_menu1):
 
             if op_professor == 1:
                 incluir_professor()
-
             elif op_professor == 2:
                 listar_professor()
-
             elif op_professor == 3:
                 atualizar_professor()
-
             elif op_professor == 4:
                 excluir_professor()
-
             elif op_professor == 5:
                 menu()
             else:
@@ -445,16 +473,12 @@ def sub_menu(opcao_menu1):
 
             if op_estudante == 1:
                 incluir_aluno()
-
             elif op_estudante == 2:
                 listar_aluno()
-
             elif op_estudante == 3:
                 atualizar_aluno()
-
             elif op_estudante == 4:
                 excluir_aluno()
-
             elif op_estudante == 5:
                 menu()
 
@@ -480,27 +504,16 @@ def sub_menu(opcao_menu1):
             op_turma = int(input('Qual opção: '))
 
             if op_turma == 1:
-
                 incluir_turma()
-
             elif op_turma == 2:
-
                 listar_turmas()
-
             elif op_turma == 3:
-
                 atualizar_turma()
-
             elif op_turma == 4:
-
                 excluir_turma()
-
             elif op_turma == 5:
-
                 menu()
-
                 break
-
             else:
 
                 print('\033[31mOPÇÃO INVÁLIDA!\33[m')
@@ -524,21 +537,13 @@ def sub_menu(opcao_menu1):
             op_matricula = int(input('Qual opção: '))
 
             if op_matricula == 1:
-
                 incluir_matricula()
-
             elif op_matricula == 2:
-
                 listar_matriculas()
-
             elif op_matricula == 3:
-
                 atualizar_matricula()
-
             elif op_matricula == 4:
-
                 excluir_matricula()
-
             elif op_matricula == 5:
 
                 menu()
@@ -568,21 +573,13 @@ def sub_menu(opcao_menu1):
             op_disciplina = int(input('Qual opção: '))
 
             if op_disciplina == 1:
-
                 incluir_disciplina()
-
             elif op_disciplina == 2:
-
                 listar_disciplinas()
-
             elif op_disciplina == 3:
-
                 atualizar_disciplina()
-
             elif op_disciplina == 4:
-
                 excluir_disciplina()
-
             elif op_disciplina == 5:
 
                 menu()
@@ -596,17 +593,11 @@ def sub_menu(opcao_menu1):
     else:  # FINAZALIÇÃO DA OPERAÇÃO OU RETORNO AO MENU PRINCIPAL.
 
         print('\033[31mOPERAÇÃO FINALIZADA.\33[m')
-
         R = input('\nDeseja tentar novamente? (S/N) \n').upper()
-
         if R == 'S':
-
             menu()
-
         else:
-
             print('\033[31mOPERAÇÃO FINALIZADA.\33[m')
-
             quit()
 
 
